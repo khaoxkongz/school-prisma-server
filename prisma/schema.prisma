@@ -24,5 +24,12 @@ model Student {
   fullname    String
   classroom   Classroom @relation(fields: [classroomId], references: [id], onDelete: Cascade)
   classroomId Int
+  clubs       Club[]
 }
 
+// Part 2
+model Club {
+  id       Int       @id @default(autoincrement())
+  name     String    @unique
+  students Student[]
+}
