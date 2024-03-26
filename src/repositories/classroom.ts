@@ -1,32 +1,21 @@
-import { PrismaClient } from "@prisma/client";
+import { DbDriver } from "../../prisma";
 import { IClassroom } from "../entities";
-
-export interface IRepositoryClassroom {
-  createClassroom(name: string): Promise<IClassroom>;
-  getClassrooms(): Promise<IClassroom[]>;
-}
-
-export function newRepositoryClassroom(db: PrismaClient): IRepositoryClassroom {
-  return new RepositoryClassroom(db);
-}
+import { IRepositoryClassroom } from "../interfaces/classroom";
 
 class RepositoryClassroom implements IRepositoryClassroom {
-  private db: PrismaClient;
+  private db: DbDriver;
 
-  constructor(db: PrismaClient) {
+  constructor(db: DbDriver) {
     this.db = db;
   }
 
   public async createClassroom(name: string): Promise<IClassroom> {
-    return await this.db.classroom
-      .create({ data: { name } })
-      .then((classroom) => classroom)
-      .catch((err) => {
-        return Promise.reject(`failed to create classroom: ${err}`);
-      });
+    return await this.db.classroom.create({ data: { name } });
   }
 
   public async getClassrooms(): Promise<IClassroom[]> {
     return this.db.classroom.findMany();
   }
 }
+
+export { RepositoryClassroom };
