@@ -1,19 +1,23 @@
-import { Request, Response } from "express";
+import { IHandlerClubs } from "../routes/club";
+import { IRepositoryClub } from "../interfaces/club";
+import { PrismaClientKnownRequestError } from "@prisma/client/runtime/library";
 
-import { IRepositoryClub } from "../repositories";
-
-export class HandlerClub {
+export class HandlerClub implements IHandlerClubs {
   private repo: IRepositoryClub;
 
   constructor(repo: IRepositoryClub) {
     this.repo = repo;
   }
 
-  async createClub(req: Request, res: Response): Promise<Response> {
+  public createClub: IHandlerClubs["createClub"] = async (req, res) => {
     const { name } = req.body;
 
     if (!name) {
       return res.status(400).json({ error: "missing name in body" }).end();
+    }
+
+    if (name !== "string" || name.length < 0) {
+      return res.status(400).json({ error: "name must be empty" }).end();
     }
 
     return this.repo
@@ -23,19 +27,22 @@ export class HandlerClub {
         const errMsg = `failed to create club ${name}`;
         console.error(`${errMsg}: ${err}`);
 
-        return res.status(500).json({ error: errMsg }).end();
-      });
-  }
+        if (err instanceof PrismaClientKnownRequestError && err.code === "P2002") {
+          return res.status(400).json({ error: errMsg });
+        }
 
-  async getClubs(_: Request, res: Response): Promise<Response> {
+        return res.status(500).json({ error: "Internal Server Error" }).end();
+      });
+  };
+
+  public getClubs: IHandlerClubs["getClubs"] = async (_req, res) => {
     return this.repo
       .getClubs()
       .then((clubs) => res.status(200).json(clubs).end())
       .catch((err) => {
-        const errMsg = `failed to create club ${name}`;
+        const errMsg = `failed to retrieve clubs`;
         console.error(`${errMsg}: ${err}`);
-
-        return res.status(500).json({ error: errMsg }).end();
+        return res.status(500).json({ error: "Internal Server Error" }).end();
       });
-  }
+  };
 }
