@@ -7,3 +7,5 @@ export type DbCourseModel = Course;
 export type DbTeacherModel = Teacher;
 
 export { DbDriver };
+
+export default new DbDriver();
