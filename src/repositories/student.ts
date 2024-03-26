@@ -1,43 +1,19 @@
-import { PrismaClient } from "@prisma/client";
+import { DbDriver } from "../../prisma";
 import { ICreateStudent, IStudent, IStudentWithClassroom } from "../entities";
+import { IRepositoryStudent } from "../interfaces/student";
 
-export interface IRepositoryStudent {
-  createStudent(arg: ICreateStudent): Promise<IStudent>;
-  getStudents(): Promise<IStudent[]>;
-  getStudentById(id: number): Promise<IStudentWithClassroom | null>;
-  setClubs(id: number, clubsIds: number[]): Promise<IStudent>;
-  deleteStudentById(id: number): Promise<IStudent>;
-}
-
-export function newRepositoryStudent(db: PrismaClient): IRepositoryStudent {
-  return new RepositoryStudent(db);
-}
+import studentModel from "../models/student";
 
 class RepositoryStudent implements IRepositoryStudent {
-  private db: PrismaClient;
+  private db: DbDriver;
 
-  constructor(db: PrismaClient) {
+  constructor(db: DbDriver) {
     this.db = db;
   }
 
-  public async createStudent(arg: ICreateStudent): Promise<IStudent> {
+  public async createStudent(data: ICreateStudent): Promise<IStudent> {
     return await this.db.student.create({
-      data: {
-        fullname: arg.fullname,
-        // Connect classroom
-        classroom: {
-          connect: {
-            id: arg.classId,
-          },
-        },
-        // Connect clubs
-        clubs: {
-          // connect: [{ id: 1}, {id: 2}]
-          connect: arg.clubsIds?.map((clubsId) => {
-            return { id: clubsId };
-          }),
-        },
-      },
+      data: studentModel.tranformDataDtoToCreateDataModel(data),
     });
   }
 
@@ -46,12 +22,9 @@ class RepositoryStudent implements IRepositoryStudent {
   }
 
   public async getStudentById(id: number): Promise<IStudentWithClassroom | null> {
-    return await this.db.student.findUnique({
+    return await this.db.student.findUniqueOrThrow({
       where: { id },
-      include: {
-        classroom: true,
-        clubs: true,
-      },
+      include: studentModel.includeClassroomAndClubs(),
     });
   }
 
@@ -62,18 +35,11 @@ class RepositoryStudent implements IRepositoryStudent {
   }
 
   public async setClubs(id: number, clubsIds: number[]): Promise<IStudent> {
-    const connectClubs = clubsIds.map((clubsId) => {
-      return { id: clubsId };
-    });
-
     return await this.db.student.update({
       where: { id },
-      data: {
-        clubs: {
-          // set: [{id: 1}, {id: 2}, {id: 3}]
-          set: connectClubs,
-        },
-      },
+      data: studentModel.tranformDataToSetAndConnectClubs(clubsIds),
     });
   }
 }
+
+export { RepositoryStudent };
