@@ -1,38 +1,26 @@
-import { PrismaClient } from "@prisma/client";
+import { DbDriver } from "../../prisma";
 
 import { IClub, IClubWithStudents } from "../entities";
+import { IRepositoryClub } from "../interfaces/club";
 
-export interface IRepositoryClub {
-  createClub(name: string): Promise<IClub>;
-  getClubs(): Promise<IClubWithStudents[]>;
-}
-
-export function newRepositoryClub(db: PrismaClient): IRepositoryClub {
-  return new RepositoryClub(db);
-}
+import modelClubs from "../models/clubs";
 
 class RepositoryClub implements IRepositoryClub {
-  private db: PrismaClient;
+  private db: DbDriver;
 
-  constructor(db: PrismaClient) {
+  constructor(db: DbDriver) {
     this.db = db;
   }
 
   public async createClub(name: string): Promise<IClub> {
-    return await this.db.club.create({ data: { name } }).catch((err) => Promise.reject(`failed to create club: ${err}`));
+    return await this.db.club.create({ data: { name } });
   }
 
   public async getClubs(): Promise<IClubWithStudents[]> {
-    return await this.db.club
-      .findMany({
-        include: {
-          students: {
-            include: {
-              classroom: true,
-            },
-          },
-        },
-      })
-      .catch((err) => Promise.reject(`failed to get club: ${err}`));
+    return await this.db.club.findMany({
+      include: modelClubs.includeStudentWithClassroom(),
+    });
   }
 }
+
+export { RepositoryClub };
