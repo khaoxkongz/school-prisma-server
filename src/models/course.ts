@@ -16,13 +16,16 @@ const includeTeacherModel = (): Prisma.CourseInclude<DefaultArgs> => {
   return {
     instructor: {
       select: {
+        id: true,
         name: true,
+        username: true,
+        createdAt: true,
       },
     },
   };
 };
 
-const fromWhereTeacherToCreateOne = (where: IWhereTeacher, data: ICreateCourse) => {
+const fromWhereTeacherToCreateOne = (where: IWhereTeacher, data: ICreateCourse): Prisma.CourseCreateInput => {
   const { id } = where;
   const { name, description, duration, start_time } = data;
   return {

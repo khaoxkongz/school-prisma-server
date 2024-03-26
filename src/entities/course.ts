@@ -1,8 +1,11 @@
-import { DbCourseModel, DbTeacherModel } from "../../prisma";
+import { DbCourseModel } from "../../prisma";
+import { ITeacherWithOutPassword } from "./teacher";
 
 export interface IWhereCourse {
   courseId?: string;
 }
+
+export interface ICourse extends Omit<DbCourseModel, "instructorId"> {}
 
 export interface ICreateCourse {
   name: string;
@@ -18,5 +21,5 @@ export interface IUpdateCourse {
 }
 
 export interface ICourseWithInstuctor extends DbCourseModel {
-  instructor: Pick<DbTeacherModel, "name">;
+  instructor: ITeacherWithOutPassword;
 }
